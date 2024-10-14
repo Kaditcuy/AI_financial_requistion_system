@@ -16,7 +16,8 @@ The `ai_services` directory contains all Python scripts for implementing AI serv
 2. **Install Essential Python Packages**
    Install the following essential Python packages:
 
-   ```pip install scikit-learn pandas numpy
+   ```bash
+   pip install scikit-learn pandas numpy
 
    ```
 
