@@ -4,7 +4,7 @@ const db = require("../db");
 
 /**===== Product Management (Admin Only) ===== */
 // Fetch all products with pagination
-router.get("/products", async (req, res) => {
+router.get("/products", isAuthenticated, isAdmin, async (req, res) => {
   try {
     // Get query parameters
     const limit = parseInt(req.query.limit) || 10; // default limit is 10 products per page
@@ -24,7 +24,7 @@ router.get("/products", async (req, res) => {
 });
 
 // Fetch details of a particular product
-router.get("/products/:id", async (req, res) => {
+router.get("/products/:id", isAuthenticated, isAdmin, async (req, res) => {
   const productId = req.params.id;
   try {
     const [product] = await db.query("SELECT * FROM products WHERE id = ?", [
@@ -41,7 +41,7 @@ router.get("/products/:id", async (req, res) => {
 });
 
 // Add a new product
-router.post("/products", async (req, res) => {
+router.post("/products", isAuthenticated, isAdmin, async (req, res) => {
   const { name, description, price, quantity, category } = req.body;
   try {
     await db.query(
@@ -55,7 +55,7 @@ router.post("/products", async (req, res) => {
 });
 
 // Update an existing product
-router.put("/products/:id", async (req, res) => {
+router.put("/products/:id", isAuthenticated, isAdmin, async (req, res) => {
   const productId = req.params.id;
   const { name, description, price, quantity, category } = req.body;
   try {
@@ -70,7 +70,7 @@ router.put("/products/:id", async (req, res) => {
 });
 
 // delete a product
-router.delete("/products/:id", async (req, res) => {
+router.delete("/products/:id", isAuthenticated, isAdmin, async (req, res) => {
   const productId = req.params.id;
   try {
     await db.query("DELETE FROM products WHERE id = ?", [productId]);
@@ -82,7 +82,7 @@ router.delete("/products/:id", async (req, res) => {
 
 /** ===== Product Management (Public Access) ===== */
 // Search for product by name or category with filtering by price
-router.get("/products/search", async (req, res) => {
+router.get("/products/search", isAuthenticated, async (req, res) => {
   try {
     const {
       name,
@@ -140,48 +140,52 @@ router.get("/products/search", async (req, res) => {
 });
 
 // Ftech all products under a category with filtering for price range
-router.get("/products/category/:category", async (req, res) => {
-  try {
-    //extract selected category from query param
-    const category = req.params.category;
+router.get(
+  "/products/category/:category",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      //extract selected category from query param
+      const category = req.params.category;
 
-    //extract optional query parameters for price range and page, default page is 1
-    const { minPrice, maxPrice, limit = 10, page = 1 } = req.query;
+      //extract optional query parameters for price range and page, default page is 1
+      const { minPrice, maxPrice, limit = 10, page = 1 } = req.query;
 
-    const offset = (page - 1) * limit;
-    let baseQuery = "SELECT * FROM products WHERE category = ?";
-    let queryParams = [category];
+      const offset = (page - 1) * limit;
+      let baseQuery = "SELECT * FROM products WHERE category = ?";
+      let queryParams = [category];
 
-    //If price range is in the req query add them in the sql query
-    if (minPrice && maxPrice) {
-      baseQuery += " AND price BETWEEN ? AND ?";
-      queryParams.push(minPrice, maxPrice);
+      //If price range is in the req query add them in the sql query
+      if (minPrice && maxPrice) {
+        baseQuery += " AND price BETWEEN ? AND ?";
+        queryParams.push(minPrice, maxPrice);
+      }
+
+      //Add pagination to the query
+      baseQuery += "LIMIT ? OFFSET ?";
+      queryParams.push(parseInt(limit), parseInt(offset));
+
+      //Execute the query
+      const products = await db.query(baseQuery, queryParams);
+
+      //Return the response
+      res.status(200).json({
+        success: true,
+        data: products,
+        pagination: { currentPage: page, limit: parseInt(limit) },
+      });
+    } catch (error) {
+      console.error(error);
+      res
+        .status(500)
+        .json({ success: false, message: "Failed to fetch products" });
     }
-
-    //Add pagination to the query
-    baseQuery += "LIMIT ? OFFSET ?";
-    queryParams.push(parseInt(limit), parseInt(offset));
-
-    //Execute the query
-    const products = await db.query(baseQuery, queryParams);
-
-    //Return the response
-    res.status(200).json({
-      success: true,
-      data: products,
-      pagination: { currentPage: page, limit: parseInt(limit) },
-    });
-  } catch (error) {
-    console.error(error);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to fetch products" });
   }
-});
+);
 
 /** ===== Sort products by alphabetical order, price, category  and quantity(knowing which products are well stocked and which are not readily available)*/
 // sort by price (order => asc or desc)
-router.get("/products/sort/price/:order", async (req, res) => {
+router.get("/products/sort/price/:order", isAuthenticated, async (req, res) => {
   try {
     //extract the order parameter (asc or desc)
     const { order } = req.params;
@@ -227,39 +231,45 @@ router.get("/products/sort/price/:order", async (req, res) => {
 });
 
 // sort by quantity (order => asc or desc)
-router.get("/products/sort/quantity/:order", async (req, res) => {
-  try {
-    // extracting only {order} from param but this order = will extract and store all params in an order variabe=le
-    const { order } = req.params;
+router.get(
+  "/products/sort/quantity/:order",
+  isAuthenticated,
+  async (req, res) => {
+    try {
+      // extracting only {order} from param but this order = will extract and store all params in an order variabe=le
+      const { order } = req.params;
 
-    if (order !== "asc" && order !== "desc") {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid sort order" });
+      if (order !== "asc" && order !== "desc") {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid sort order" });
+      }
+
+      //extract optional params for pagination
+      const { limit = 10, page = 1 } = req.query;
+      const offset = (parseInt(page) - 1) * parseInt(limit);
+
+      const [products] = await db.query(
+        `SELECT * FROM products ORDER BY quantity ${order.toUpperCase()} LIMIT ? OFFSET ?`,
+        [parseInt(limit), offset]
+      );
+      //send a structures response
+      res.status(200).json({
+        success: true,
+        data: products,
+        pagination: { currentPage: page, limit: parseInt(limit) },
+      });
+    } catch (error) {
+      console.error(error);
+      res
+        .status(500)
+        .json({ success: false, message: "Internal Server error" });
     }
-
-    //extract optional params for pagination
-    const { limit = 10, page = 1 } = req.query;
-    const offset = (parseInt(page) - 1) * parseInt(limit);
-
-    const [products] = await db.query(
-      `SELECT * FROM products ORDER BY quantity ${order.toUpperCase()} LIMIT ? OFFSET ?`,
-      [parseInt(limit), offset]
-    );
-    //send a structures response
-    res.status(200).json({
-      success: true,
-      data: products,
-      pagination: { currentPage: page, limit: parseInt(limit) },
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: "Internal Server error" });
   }
-});
+);
 
 // sort alphabetically by name (order => A-Z asc or Z-A desc)
-router.get("/products/sort/name/:order", async (req, res) => {
+router.get("/products/sort/name/:order", isAuthenticated, async (req, res) => {
   try {
     // extracting only {order} from param but this order = will extract and store all params in an order variabe=le
     const { order } = req.params;
