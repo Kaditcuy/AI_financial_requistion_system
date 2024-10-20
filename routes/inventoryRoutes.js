@@ -13,12 +13,10 @@ router.post("/inventory", isAuthenticated, isAdmin, async (req, res) => {
       "INSERT INTO inventory_managementb(product_id, quantity_available, quantity_ordered, reorder_level) VALUES (?, ?, ?, ?)",
       [product_id, quantity_available, quantity_ordered, reorder_level]
     );
-    res
-      .status(201)
-      .json({
-        message: "Inventory entry created successfully",
-        id: result.insertId,
-      });
+    res.status(201).json({
+      message: "Inventory entry created successfully",
+      id: result.insertId,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Failed to create inventory entry" });
@@ -89,4 +87,5 @@ router.delete("/inventory/:id", isAuthenticated, isAdmin, async (req, res) => {
     res.status(500).json({ error: "Failed to delete inventory entry" });
   }
 });
+
 module.exports = router;
