@@ -1,5 +1,5 @@
 const express = require("express");
-const router = express.Router;
+const router = express.Router ();
 const db = require("../db.js");
 const { isAdmin, isAuthenticated } = require("../middleware/authMiddleware");
 
@@ -10,7 +10,7 @@ router.post("/inventory", isAuthenticated, isAdmin, async (req, res) => {
 
   try {
     const result = await db.query(
-      "INSERT INTO inventory_managementb(product_id, quantity_available, quantity_ordered, reorder_level) VALUES (?, ?, ?, ?)",
+      "INSERT INTO inventory_management(product_id, quantity_available, quantity_ordered, reorder_level) VALUES (?, ?, ?, ?)",
       [product_id, quantity_available, quantity_ordered, reorder_level]
     );
     res.status(201).json({
@@ -43,7 +43,7 @@ router.get(
     const { product_id } = req.params;
     try {
       const [rows] = await db.query(
-        "SELECT * FROM inventory WHERE product_id = ?",
+        "SELECT * FROM inventory_management WHERE product_id = ?",
         [product_id]
       );
       if (rows.length === 0) {

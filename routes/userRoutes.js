@@ -1,3 +1,4 @@
+const jwt = require("jsonwebtoken");
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt"); //Password hasher
@@ -149,14 +150,14 @@ router.get(
 /** ======= User Registration & Authentication ====== **/
 // Register a new user
 router.post("/users/register", async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, buisnessId } = req.body;
 
   //hash the password using bcrypt
   const hashedPassword = await bcrypt.hash(password, 10);
   try {
     await db.query(
-      "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)",
-      [name, email, hashedPassword, "regular_user"]
+      "INSERT INTO users (name, email, password, role, buisness_id) VALUES (?, ?, ?, ?, ?)",
+      [name, email, hashedPassword, "regular_user", buisnessId]
     ); //there's no role here because that function is only for an admin and the default if not selected upon user creation is regular_user
     res.status(201).json({ message: "Registration successful" });
   } catch (error) {
@@ -173,7 +174,15 @@ router.post("/users/login", async (req, res) => {
       email,
     ]);
     if (user && (await bcrypt.compare(password, user.password))) {
-      res.json({ message: "Login successful" });
+      // Generate JWT token   //payload with user's id and role //secret key(store in env var) //
+      const token = jwt.sign(
+        { id: user.id, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: "1h" }
+      );
+
+      //send the token as a response allowing for sessionStorage along with success message
+      res.json({ message: "Login successful", token });
     } else {
       res.status(401).json({ error: "Invalid email or password" });
     }

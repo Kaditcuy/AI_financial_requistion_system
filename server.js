@@ -1,4 +1,6 @@
+require("dotenv").config();
 const express = require("express");
+const jwt = require("jsonwebtoken");
 const bodyParser = require("body-parser");
 const mysql = require("mysql2");
 const userRoutes = require("./routes/userRoutes"); //exports the router in the userRoutes file and stores it in the userRoutes variable and what that means is that the userRoutes variable contains all the endpoints related to users operations like retrieving users data
