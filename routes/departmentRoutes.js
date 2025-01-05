@@ -1,7 +1,7 @@
 const express = require("express");
-const router = express.Router;
+const router = express.Router();
 const db = require("../db");
-const { isAdmin } = require("../middleware/authMiddleware");
+const { isAuthenticated, isAdmin } = require("../middleware/authMiddleware");
 
 //Handles the creation of a department by admin, eg., Finance, Procurement, or HR
 router.post(

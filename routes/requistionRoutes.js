@@ -1,5 +1,5 @@
 const express = require("express");
-const router = express.Router;
+const router = express.Router();
 const db = require("../db.js");
 const { isAdmin, isAuthenticated } = require("../middleware/authMiddleware");
 /** Integrating core functionalites that facilitate the requistion process */

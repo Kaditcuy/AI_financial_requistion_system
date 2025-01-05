@@ -1,6 +1,8 @@
 const express = require("express");
-const router = express.router;
+const router = express.Router();
 const db = require("../db");
+const { isAuthenticated, isAdmin } = require("../middleware/authMiddleware"); // Adjust the path based on your folder structure
+
 
 /**===== Product Management (Admin Only) ===== */
 // Fetch all products with pagination

@@ -1,6 +1,8 @@
 const express = require("express");
-const router = express.Router;
+const router = express.Router();
 const db = require("../db");
+const { isAuthenticated } = require("../middleware/authMiddleware"); // Adjust the path based on your folder structure
+
 
 //creating payment record
 router.post("/create-payment", isAuthenticated, async (req, res) => {

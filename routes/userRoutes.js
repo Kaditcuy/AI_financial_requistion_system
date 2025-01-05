@@ -3,6 +3,8 @@ const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt"); //Password hasher
 const db = require("../db"); // Import your database connection
+const { isAuthenticated, isAdmin } = require("../middleware/authMiddleware"); // Adjust the path based on your folder structure
+
 
 /** Route to create an admin user */
 router.post("/create-admin", async (req, res) => {

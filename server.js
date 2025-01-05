@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const bodyParser = require("body-parser");
-const mysql = require("mysql2");
+//const mysql = require("mysql2");
 const userRoutes = require("./routes/userRoutes"); //exports the router in the userRoutes file and stores it in the userRoutes variable and what that means is that the userRoutes variable contains all the endpoints related to users operations like retrieving users data
 const productRoutes = require("./routes/productRoutes"); // Add missing imports
 const inventoryRoutes = require("./routes/inventoryRoutes");
@@ -16,6 +16,10 @@ const app = express();
 const port = process.env.PORT || 3000; // Choose your desired port
 
 app.use(bodyParser.json()); // Middleware to parse JSON bodies good for handling incoming requests
+
+app.get("/", (req, res) => {
+  res.send("Welcome to the AI Financial Requisition System");
+});
 
 //define API routes
 app.use("/api/users", userRoutes); // Prefix API routes of all users operatons with /api
