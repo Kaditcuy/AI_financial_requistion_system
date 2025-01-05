@@ -16,8 +16,8 @@ router.post("/create-admin", async (req, res) => {
   try {
     //Insert new admin user into the database
     await db.query(
-      "INSERT INTO users (name, password, email, role) VALUES (?, ?, ?, ?)",
-      [name, hashedPassword, email, "admin"]
+      "INSERT INTO users (name, password, email, role, buisnessId) VALUES (?, ?, ?, ?, ?)",
+      [name, hashedPassword, email, "admin", null]
     );
     res.json({ message: "Admin user created successfully" });
   } catch (error) {
@@ -28,7 +28,7 @@ router.post("/create-admin", async (req, res) => {
 
 /** ======= User Management (Admin Only) ========== **/
 // Fetch all users (restricted to admins)
-router.get("/users", isAuthenticated, isAdmin, async (req, res) => {
+router.get("/", isAuthenticated, isAdmin, async (req, res) => {
   try {
     const users = await db.query("SELECT * FROM users"); // Adjust as needed
     res.json(users);
@@ -39,7 +39,8 @@ router.get("/users", isAuthenticated, isAdmin, async (req, res) => {
 });
 
 // Fetch details of a specific user (admin only)
-router.get("/users/:id", isAuthenticated, isAdmin, async (req, res) => {
+router.get("/:id", isAuthenticated, isAdmin, async (req, res) => {
+  console.log("Request received for user ID:", req.params.id); // Debug log
   const userId = req.params.id;
   try {
     const [user] = await db.query("Select * FROM users WHERE id = ?", [userId]);
@@ -49,48 +50,93 @@ router.get("/users/:id", isAuthenticated, isAdmin, async (req, res) => {
       res.status(404).json({ error: "User not found " });
     }
   } catch (error) {
-    console.error(error);
+    console.error("Database Error:", error);
     res.status(500).json({ error: "Database query failed" });
   }
 });
 
 // Add new users directly (admin only)
-router.post("/users", isAuthenticated, isAdmin, async (req, res) => {
+router.post("/", isAuthenticated, isAdmin, async (req, res) => {
+  console.log("Request Body:", req.body);
+  console.log("Request Headers:", req.headers);
+
   const { name, password, email, role } = req.body;
 
-  // Hash the password using bcrypt
-  const hashedPassword = await bcrypt.hash(password, 10);
+  if (!name || !email || !password) {
+    return res.status(400).json({ error: "All fields are required" });
+  }
+  
   try {
+    // Hash the password using bcrypt
+  const hashedPassword = await bcrypt.hash(password, 10);
     await db.query(
       "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)",
       [name, email, hashedPassword, role || "regular_user"]
     );
     res.status(201).json({ message: "User added successfully" });
   } catch (error) {
-    console.error(error);
+    console.error("Database Error:", error);
     res.status(500).json({ error: "Failed to add user" });
   }
 });
 
 // Update specific user's information (admin only)
-router.put("/users/:id", isAuthenticated, isAdmin, async (req, res) => {
+router.put("/:id", isAuthenticated, isAdmin, async (req, res) => {
   const userId = req.params.id;
   const { name, email, role } = req.body;
+
+   // Log the request body for debugging
+   console.log("Request Body:", req.body);
+
+
+// Ensure role is provided and valid
+if (role && !['admin', 'regular_user'].includes(role)) {
+  return res.status(400).json({ error: "Invalid role. Role must be 'admin' or 'regular_user'." });
+}
+
+  //Prepare the SQL query and values dynamically based on the previous fields
+  let updateFields = [];
+  let values =[];
+
+  if (name) {
+    updateFields.push("name  = ?");
+    values.push(name);
+  }
+  if (email) {
+    updateFields.push("email  = ?");
+    values.push(name);
+  }
+  if (role) {
+    updateFields.push("role  = ?");
+    values.push(role);
+  }
+
+    // If no fields were provided, return an error
+    if (updateFields.length === 0) {
+      return res.status(400).json({ error: "At least one field (name, email, role) must be provided" });
+    }
+
+  values.push(userId);
+
+  const query = `UPDATE users SET ${updateFields.join(",")} WHERE id = ?`;
+  
+  // Log the query and values for debugging
+  console.log("Query:", query);
+  console.log("Values:", values);
+
   try {
-    await db.query(
-      "UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?",
-      [name, email, role, userId]
-    );
+    await db.query(query, values);
     res.json({ message: "User Updated successfully" });
   } catch (error) {
-    console.error(error);
+    console.error("Error updating user:", error);
     res.status(500).json({ error: "Failed to update user" });
   }
 });
 
 // Delete a user from the system (admin only)
-router.delete("/users/:id", isAuthenticated, isAdmin, async (req, res) => {
+router.delete("/:id", isAuthenticated, isAdmin, async (req, res) => {
   const userId = req.params.id;
+  console.log(`Attempting to delete user with ID: ${userId}`);
   try {
     await db.query("DELETE FROM users WHERE id = ?", [userId]);
     res.json({ message: "User deleted successfully" });
@@ -100,18 +146,6 @@ router.delete("/users/:id", isAuthenticated, isAdmin, async (req, res) => {
   }
 });
 
-// Update role of a specific user (admin only)
-router.put("/users/:id/role", isAuthenticated, isAdmin, async (req, res) => {
-  const userId = req.params.id;
-  const { role } = req.body;
-  try {
-    await db.query("UPDATE users SET role = ? WHERE id = ?", [role, userId]);
-    res.json({ message: "User role updated succesfully" });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Failed to update user role" });
-  }
-});
 
 // Enable or disable a user's account (admin only)
 router.put("/users/:id/status", isAuthenticated, isAdmin, async (req, res) => {

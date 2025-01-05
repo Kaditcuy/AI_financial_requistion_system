@@ -11,16 +11,17 @@ const isAuthenticated = (req, res, next) => {
     req.user = decoded;
     return next();
   } catch (err) {
+    console.error("JWT Verification Error:", err.message);
     return res.status(403).json({ error: "Invalid or expired token." });
   }
 };
 
 const isAdmin = (req, res, next) => {
-  if (req.user && req.user.role === "admin") {
-    //assuming req.user.role is set to admin
-    return next();
+  if (req.user.role !== "admin") {
+    return res.status(403).json({ error: "Forbidden, admin access only" });
   }
-  return res.status(400).json({ error: "Access denied" });
+  console.log("Admin Access Granted:", req.user);
+  next();
 };
 
 module.exports = { isAuthenticated, isAdmin };
