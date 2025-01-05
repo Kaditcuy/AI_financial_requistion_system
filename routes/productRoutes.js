@@ -6,7 +6,7 @@ const { isAuthenticated, isAdmin } = require("../middleware/authMiddleware"); //
 
 /**===== Product Management (Admin Only) ===== */
 // Fetch all products with pagination
-router.get("/products", isAuthenticated, isAdmin, async (req, res) => {
+router.get("/", isAuthenticated, isAdmin, async (req, res) => {
   try {
     // Get query parameters
     const limit = parseInt(req.query.limit) || 10; // default limit is 10 products per page
@@ -26,7 +26,7 @@ router.get("/products", isAuthenticated, isAdmin, async (req, res) => {
 });
 
 // Fetch details of a particular product
-router.get("/products/:id", isAuthenticated, isAdmin, async (req, res) => {
+router.get("/:id", isAuthenticated, isAdmin, async (req, res) => {
   const productId = req.params.id;
   try {
     const [product] = await db.query("SELECT * FROM products WHERE id = ?", [
@@ -43,7 +43,7 @@ router.get("/products/:id", isAuthenticated, isAdmin, async (req, res) => {
 });
 
 // Add a new product
-router.post("/products", isAuthenticated, isAdmin, async (req, res) => {
+router.post("/", isAuthenticated, isAdmin, async (req, res) => {
   const { name, description, price, quantity, category } = req.body;
   try {
     await db.query(
@@ -57,7 +57,7 @@ router.post("/products", isAuthenticated, isAdmin, async (req, res) => {
 });
 
 // Update an existing product
-router.put("/products/:id", isAuthenticated, isAdmin, async (req, res) => {
+router.put("/:id", isAuthenticated, isAdmin, async (req, res) => {
   const productId = req.params.id;
   const { name, description, price, quantity, category } = req.body;
   try {
@@ -72,7 +72,7 @@ router.put("/products/:id", isAuthenticated, isAdmin, async (req, res) => {
 });
 
 // delete a product
-router.delete("/products/:id", isAuthenticated, isAdmin, async (req, res) => {
+router.delete("/:id", isAuthenticated, isAdmin, async (req, res) => {
   const productId = req.params.id;
   try {
     await db.query("DELETE FROM products WHERE id = ?", [productId]);
@@ -84,7 +84,7 @@ router.delete("/products/:id", isAuthenticated, isAdmin, async (req, res) => {
 
 /** ===== Product Management (Public Access) ===== */
 // Search for product by name or category with filtering by price
-router.get("/products/search", isAuthenticated, async (req, res) => {
+router.get("/search", isAuthenticated, async (req, res) => {
   try {
     const {
       name,
@@ -143,7 +143,7 @@ router.get("/products/search", isAuthenticated, async (req, res) => {
 
 // Ftech all products under a category with filtering for price range
 router.get(
-  "/products/category/:category",
+  "/category/:category",
   isAuthenticated,
   async (req, res) => {
     try {
@@ -187,7 +187,7 @@ router.get(
 
 /** ===== Sort products by alphabetical order, price, category  and quantity(knowing which products are well stocked and which are not readily available)*/
 // sort by price (order => asc or desc)
-router.get("/products/sort/price/:order", isAuthenticated, async (req, res) => {
+router.get("/sort/price/:order", isAuthenticated, async (req, res) => {
   try {
     //extract the order parameter (asc or desc)
     const { order } = req.params;
@@ -234,7 +234,7 @@ router.get("/products/sort/price/:order", isAuthenticated, async (req, res) => {
 
 // sort by quantity (order => asc or desc)
 router.get(
-  "/products/sort/quantity/:order",
+  "/sort/quantity/:order",
   isAuthenticated,
   async (req, res) => {
     try {
@@ -271,7 +271,7 @@ router.get(
 );
 
 // sort alphabetically by name (order => A-Z asc or Z-A desc)
-router.get("/products/sort/name/:order", isAuthenticated, async (req, res) => {
+router.get("/sort/name/:order", isAuthenticated, async (req, res) => {
   try {
     // extracting only {order} from param but this order = will extract and store all params in an order variabe=le
     const { order } = req.params;

@@ -22,7 +22,9 @@ app.get("/", (req, res) => {
 });
 
 //define API routes
+console.log("Loading user routes...");
 app.use("/api/users", userRoutes); // Prefix API routes of all users operatons with /api
+console.log("Loading product routes...");
 app.use("/api/products", productRoutes); //all endpoints of products operation
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/requisition", requistionRoutes);

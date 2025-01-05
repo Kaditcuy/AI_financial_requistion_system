@@ -151,31 +151,52 @@ router.get(
 
 /** ======= User Registration & Authentication ====== **/
 // Register a new user
-router.post("/users/register", async (req, res) => {
+router.post("/sign-up", async (req, res) => {
   const { name, email, password, buisnessId } = req.body;
 
   //hash the password using bcrypt
   const hashedPassword = await bcrypt.hash(password, 10);
   try {
     await db.query(
-      "INSERT INTO users (name, email, password, role, buisness_id) VALUES (?, ?, ?, ?, ?)",
+      "INSERT INTO users (name, email, password, role, buisnessId) VALUES (?, ?, ?, ?, ?)",
       [name, email, hashedPassword, "regular_user", buisnessId]
     ); //there's no role here because that function is only for an admin and the default if not selected upon user creation is regular_user
     res.status(201).json({ message: "Registration successful" });
   } catch (error) {
-    console.error(error);
+    console.error('Error during registration: ', error);
     res.status(500).json({ message: "Registration failed" });
   }
 });
 
 // User login
-router.post("/users/login", async (req, res) => {
+router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
-    const [user] = await db.query("SELECT * FROM users WHERE email = ?", [
+    const [rows] = await db.query("SELECT * FROM users WHERE email = ?", [
       email,
     ]);
-    if (user && (await bcrypt.compare(password, user.password))) {
+
+    // if user not found
+    if (!rows || rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const user = rows[0]; //Acess the first user object in the array
+
+    console.log("User found:", user); //log user object ti check if password is correctly retrieved
+
+    if(!user.password){
+      return res.status(500).json({ message: "Password not found for user" });
+    }
+
+    console.log("Password from database:", user.password);  // Log the hashed password from database
+
+    //compare hashed password with provided password
+    const match = await bcrypt.compare(password, user.password)
+    if ( match) {
+
+      console.log("JWT Secret:", process.env.JWT_SECRET); // This should log your secret key
+
       // Generate JWT token   //payload with user's id and role //secret key(store in env var) //
       const token = jwt.sign(
         { id: user.id, role: user.role },
@@ -203,8 +224,8 @@ router.post("/users/logout", isAuthenticated, async (req, res) => {
 
 /** ======= User Profile & Account Management ======= **/
 // Fetch profile of the currently logged-in user
-router.get("/users/profile", isAuthenticated, async (req, res) => {
-  const userId = req.session.userId;
+router.get("/profile", isAuthenticated, async (req, res) => {
+  const userId = req.user.id; //Acessing the userId from the decoded token
   try {
     const [user] = await db.query("SELECT * FROM users WHERE id = ?", [userId]);
     res.json(user);
