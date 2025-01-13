@@ -11,10 +11,12 @@ const departmentRoutes = require("./routes/departmentRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const auditlogRoutes = require("./routes/auditlogRoutes"); // Correct the name for consistency
 const approvalRoutes = require("./routes/approvalRoutes");
+const logActivity = require("./middleware/logActivity");
 
 const app = express();
 const port = process.env.PORT || 3000; // Choose your desired port
 
+app.use(logActivity);
 app.use(bodyParser.json()); // Middleware to parse JSON bodies good for handling incoming requests
 
 app.get("/", (req, res) => {

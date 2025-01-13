@@ -26,9 +26,7 @@ CREATE TABLE `activities` (
   `id` int NOT NULL AUTO_INCREMENT,
   `user_id` int NOT NULL,
   `action` varchar(255) NOT NULL,
-  `timestamp` datetime DEFAULT CURRENT_TIMESTAMP,
-  `ip_address` varchar(45) DEFAULT NULL,
-  `user_agent` text,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   CONSTRAINT `activities_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
@@ -203,4 +201,4 @@ CREATE TABLE `users` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-01-07  0:15:14
+-- Dump completed on 2025-01-06 23:56:27

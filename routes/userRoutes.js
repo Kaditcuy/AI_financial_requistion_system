@@ -8,6 +8,7 @@ const { isAuthenticated, isAdmin } = require("../middleware/authMiddleware"); //
 
 /** Route to create an admin user */
 router.post("/create-admin", async (req, res) => {
+  req.action = "Create Admin";
   const { name, password, email } = req.body;
 
   //Hash the password using bcrypt
@@ -57,6 +58,7 @@ router.get("/:id", isAuthenticated, isAdmin, async (req, res) => {
 
 // Add new users directly (admin only)
 router.post("/", isAuthenticated, isAdmin, async (req, res) => {
+  req.action = "Add User";
   console.log("Request Body:", req.body);
   console.log("Request Headers:", req.headers);
 
@@ -82,6 +84,7 @@ router.post("/", isAuthenticated, isAdmin, async (req, res) => {
 
 // Update specific user's information (admin only)
 router.put("/:id", isAuthenticated, isAdmin, async (req, res) => {
+  req.action = "Update User"
   const userId = req.params.id;
   const { name, email, role } = req.body;
 
@@ -135,6 +138,7 @@ if (role && !['admin', 'regular_user'].includes(role)) {
 
 // Delete a user from the system (admin only)
 router.delete("/:id", isAuthenticated, isAdmin, async (req, res) => {
+  req.action = "Delete User";
   const userId = req.params.id;
   console.log(`Attempting to delete user with ID: ${userId}`);
   try {
@@ -148,9 +152,15 @@ router.delete("/:id", isAuthenticated, isAdmin, async (req, res) => {
 
 
 // Enable or disable a user's account (admin only)
-router.put("/users/:id/status", isAuthenticated, isAdmin, async (req, res) => {
+router.put("/:id/status", isAuthenticated, isAdmin, async (req, res) => {
+  req.action = "Update User Status";
   const userId = req.params.id;
   const { status } = req.body;
+
+  //validate the status value
+  if(!['enabled', 'disabled'].includes(status)){
+    return res.status(400).json({error: "Invalid status. Must be 'enabled' or 'disabled'."});
+  }
   try {
     await db.query("UPDATE users SET status = ? WHERE id = ?", [
       status,
@@ -165,19 +175,20 @@ router.put("/users/:id/status", isAuthenticated, isAdmin, async (req, res) => {
 
 // Fetch a user's activity log (admin only)
 router.get(
-  "/users/:id/activities",
+  "/:id/activities",
   isAuthenticated,
   isAdmin,
   async (req, res) => {
+    req.action = "Fetch User Activities";
     const userId = req.params.id;
     try {
-      const activities = await db.query(
-        "SELECT * FROM activities WHERE user_id = ?",
+      const [activities] = await db.query(
+        "SELECT * FROM activities WHERE user_id = ? ORDER BY created_at DESC",
         [userId]
       );
       res.json(activities);
     } catch (error) {
-      console.error(error);
+      console.error("Error fertching user activities:", error);
       res.status(500).json({ message: "Failed to fetch user activities" });
     }
   }
@@ -186,6 +197,7 @@ router.get(
 /** ======= User Registration & Authentication ====== **/
 // Register a new user
 router.post("/sign-up", async (req, res) => {
+  req.action = "User Registration";
   const { name, email, password, buisnessId } = req.body;
 
   //hash the password using bcrypt
@@ -204,6 +216,7 @@ router.post("/sign-up", async (req, res) => {
 
 // User login
 router.post("/login", async (req, res) => {
+  req.action = "User Login"; // set action for logging
   const { email, password } = req.body;
   try {
     const [rows] = await db.query("SELECT * FROM users WHERE email = ?", [
@@ -250,27 +263,43 @@ router.post("/login", async (req, res) => {
 });
 
 // User logout
-router.post("/users/logout", isAuthenticated, async (req, res) => {
-  //Assuming a session-based logout
-  req.session.destroy();
+router.post("/logout", isAuthenticated, async (req, res) => {
+   // Since JWT is stateless, there's nothing to destroy on the server.
+  // Client should delete the JWT from localStorage, sessionStorage, or cookies.
   res.json({ message: "Logged out successfully" });
 });
 
 /** ======= User Profile & Account Management ======= **/
 // Fetch profile of the currently logged-in user
-router.get("/profile", isAuthenticated, async (req, res) => {
-  const userId = req.user.id; //Acessing the userId from the decoded token
+router.get("/profiles", isAuthenticated, async (req, res) => {
+  console.log("Middleware passed. req.user:", req.user);
   try {
-    const [user] = await db.query("SELECT * FROM users WHERE id = ?", [userId]);
+    // Decoded token ID and logging
+    const userId = req.user.id; 
+    console.log("User object from token:", req.user);
+    console.log("User ID from token:", userId);
+
+    // Query the database for the user profile
+    const [rows] = await db.query("SELECT * FROM users WHERE id = ?", [userId]);
+    const user = rows[0];
+
+    // If user not found
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Respond with the user profile
     res.json(user);
   } catch (error) {
-    console.error(error);
+    console.error("Error occurred:", error);
     res.status(500).json({ message: "Failed to fetch user profile" });
   }
 });
 
+
 // Update profile information of the currently logged-in user
-router.put("/users/profile", isAuthenticated, async (req, res) => {
+router.put("/profile", isAuthenticated, async (req, res) => {
+  req.action = "Update Profile";
   const userId = req.session.userId;
   const { name, email } = req.body;
   try {
@@ -287,7 +316,8 @@ router.put("/users/profile", isAuthenticated, async (req, res) => {
 });
 
 // Change password of the logged-in user
-router.put("/users/password/change", isAuthenticated, async (req, res) => {
+router.put("/password/change", isAuthenticated, async (req, res) => {
+  req.action = "Change Password";
   const userId = req.session.userId;
   const { newPassword } = req.body;
   const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -302,8 +332,9 @@ router.put("/users/password/change", isAuthenticated, async (req, res) => {
   }
 });
 
-// Allow users to reset their password
-router.put("/users/password/reset", async (req, res) => {
+// Allow users to reset their password when logged out
+router.put("/password/reset", async (req, res) => {
+  req.action = "Reset Password";
   const { email, newPassword } = req.body;
   const hashedPassword = await bcrypt.hash(newPassword, 10);
   try {

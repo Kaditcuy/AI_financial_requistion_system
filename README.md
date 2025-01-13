@@ -1,6 +1,6 @@
 Npdejs for web app
 Express for the backend
-React for the frontend
+react for the frontend
 MySQL for database
 Venv for all python dependencies beacsue of AI
 pacakage.json to track all nodejs dependecies
