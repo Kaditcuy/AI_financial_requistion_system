@@ -6,13 +6,15 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
-    "frontend": "cd client && npm start",
+    "frontend": "cd client && next dev",
     "backend": "nodemon server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "@material-tailwind/react": "^2.1.10",
     "bcrypt": "^5.1.1",
     "dotenv": "^16.4.5",
     "express": "^4.21.1",

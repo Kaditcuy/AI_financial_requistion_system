@@ -1,0 +1,9 @@
+export * from "./pages/hero";
+export * from "./pages/layout";
+export * from "./page";
+export * from "./pages/video-intro";
+export * from "./pages/feature";
+export * from "./pages/faqs";
+export * from "./pages/mobile-convenience";
+export * from "./pages/testimonials";
+
