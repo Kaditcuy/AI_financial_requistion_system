@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const bodyParser = require("body-parser");
 //const mysql = require("mysql2");
@@ -15,6 +16,13 @@ const logActivity = require("./middleware/logActivity");
 
 const app = express();
 const port = process.env.PORT || 3000; // Choose your desired port
+
+app.use(
+  cors({
+    origin: "http://localhost:3002", //frontend origin
+    credentials: true, //Allow cookies and authorization headers etc from client
+  })
+);
 
 app.use(logActivity);
 app.use(bodyParser.json()); // Middleware to parse JSON bodies good for handling incoming requests

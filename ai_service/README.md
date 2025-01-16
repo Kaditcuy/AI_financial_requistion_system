@@ -64,3 +64,98 @@ To run any of the Python scripts, ensure the virtual environment is activated, a
 python script_name.py  # Replace with the actual script name
 
 ```
+
+Used postgres sql for the chatbot's database:
+After installing postgres server , create db by
+
+postgres@MSI:~$ CREATE DATABASE chatbot_db;
+CREATE: command not found
+postgres@MSI:~$ psql
+psql (16.6 (Ubuntu 16.6-0ubuntu0.24.04.1))
+Type "help" for help.
+
+postgres=# CREATE DATABASE #
+postgres-# CREATE USER # WITH PASSWORD "#"
+postgres-# GRANT ALL PRIVILEGES ON DATABASE # TO #
+
+update .env.local to point to the postgres database server
+Since chat_bot folder already has a drizzle.config.ts file with the configuration for migrations using drizzle-kit, migrations are much easier to manage, as it can automatically generate migration files and run them for you. Here's how you can proceed to set up and manage database migrations using drizzle-kit:
+
+Steps to Set Up and Use Migrations with drizzle-kit
+1. Ensure Environment Variables are Set
+Make sure your .env.local file contains the correct connection string for your PostgreSQL database:
+
+POSTGRES_URL=postgresql://username:password@localhost:5432/your_db_name
+Replace username, password, and your_db_name with your actual PostgreSQL credentials.
+
+2. Install drizzle-kit
+If you haven't installed drizzle-kit yet, you can do so by running:
+
+npm install drizzle-kit
+
+3. Generate Migration Files
+Once you have drizzle.config.ts set up correctly, you can generate migration files using the drizzle-kit CLI. To do this, run:
+
+npx drizzle-kit generate
+
+This will compare the current state of your schema defined in lib/db/schema.ts with your database and generate a new migration file in the lib/db/migrations directory. The migration file will contain SQL commands to create or modify the tables according to your schema.
+
+4. Run the Migrations
+Once the migration file is generated, you can apply the migration to your PostgreSQL database using:
+
+npx drizzle-kit migrate
+
+This will execute the SQL commands in the migration file and update your database schema.
+
+5. Check for Pending Migrations
+To see if there are any pending migrations, you can run:
+
+bash
+Copy
+Edit
+npx drizzle-kit status
+This will show you the current state of your migrations, whether they're up-to-date or if there are any pending migrations that need to be run.
+
+6. Rollback a Migration (Optional)
+If you need to undo the last migration, you can use:
+
+bash
+Copy
+Edit
+npx drizzle-kit rollback
+This will revert the last applied migration.
+
+7. Adding New Migrations (After Schema Changes)
+Whenever you make changes to your schema (e.g., add new tables or modify existing ones), you'll need to regenerate the migration file:
+
+npx drizzle-kit generate
+
+
+
+npx drizzle-kit migrate
+Example: Workflow Summary
+Define Schema: Your lib/db/schema.ts contains the schema definitions using Drizzle ORM.
+Generate Migration: Run npx drizzle-kit generate to generate the SQL migration files.
+Apply Migrations: Run npx drizzle-kit migrate to apply migrations to the database.
+Check Migration Status: Use npx drizzle-kit status to check if migrations are up-to-date.
+Rollback Migrations: If needed, roll back using npx drizzle-kit rollback.
+With drizzle-kit, managing migrations is simplified because it handles schema changes and their application to the database automatically. You just need to ensure that you generate and apply migrations whenever you update the schema.\
+
+
+
+
+OR simply run the migrate.ts file in lib/db to populate the db with its tables and structure make sure to use type:module in package.json to allow import/export and also install ts node
+npm install ts-node
+
+run migration script
+npx ts-node lib/db/migrate.ts
+
+now signup on chatbot should work
+
+Or run npm install
+check pacakge.json on how scripts should be run including migrations.
+which is pnpm run db:migrate
+
+make sure to login into your postgres server as root user, connect to your chat db and alter ALTER SCHEMA public OWNER TO "#db_username"; 
+
+

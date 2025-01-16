@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+      "baseUrl": ".",
+      "paths": {
+        "ai-service/*": ["ai_service/*"],
+        "client/*": ["client/*"]
+      }
+    },
+    "include": [
+    "client/**/*",  // Include all files under the client folder
+    "ai_services/**/*"  // Include all files under the ai_services folder
+  ],
+  "exclude": ["node_modules"]
+  }
+  

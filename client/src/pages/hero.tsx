@@ -1,11 +1,14 @@
 "use client";
 
+import Link from 'next/link';
+import { ThemeProvider } from "@material-tailwind/react";
 import Image from "next/image";
 import { Button, Typography } from "@material-tailwind/react";
 
 
 function Hero() {
   return (
+    <ThemeProvider>
     <div className="relative min-h-screen w-full">
       <header className="grid !min-h-[49rem] bg-gray-900 px-8">
         <div className="container mx-auto mt-32 grid h-full w-full grid-cols-1 place-items-center lg:mt-14 lg:grid-cols-2">
@@ -23,34 +26,25 @@ function Hero() {
               Get Started with FIRA!
             </Typography>
             <div className="flex flex-col gap-2 md:mb-2 md:w-10/12 md:flex-row">
+              <Link href="/auth/login" passHref>
               <Button
                 size="lg"
                 color="white"
                 className="flex justify-center items-center gap-3"
               >
-                <Image
-                  width={256}
-                  height={256}
-                  src="/logos/logo-apple.png"
-                  alt="metamask"
-                  className="w-6 h-6"
-                />
                 Login
               </Button>
+              </Link>
+
+              <Link href="/auth/signup" passHref>
               <Button
                 size="lg"
                 color="white"
                 className="flex justify-center items-center gap-3"
               >
-                <Image
-                  width={256}
-                  height={256}
-                  src="/logos/logo-google.png"
-                  alt="metamask"
-                  className="w-6 h-6"
-                />
                 Sign Up
               </Button>
+              </Link>
             </div>
           </div>
           <Image
@@ -76,6 +70,7 @@ function Hero() {
         </div>
       </div>
     </div>
+    </ThemeProvider>
   );
 }
 export default Hero;
